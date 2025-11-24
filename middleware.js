@@ -1,3 +1,9 @@
 const bodyParser = require("body-parser");
 
-exports.rawBodyMiddleware = bodyParser.raw({ type: "*/*" });
+module.exports = (app) => {
+  app.use(
+    bodyParser.raw({
+      type: "*/*",
+    })
+  );
+};
