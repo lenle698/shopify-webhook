@@ -36,7 +36,7 @@ exports.shopifyWebhook = async (req, res) => {
     // ---- 4. Insert vào BigQuery ----
     const bigquery = new BigQuery();
     await bigquery
-      .dataset("shopify")
+      .dataset("shopify_raw")
       .table("webhooks")
       .insert({
         timestamp: new Date().toISOString(),
