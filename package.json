@@ -6,12 +6,11 @@
     "start": "functions-framework --target=shopifyWebhook"
   },
   "dependencies": {
-    "@google-cloud/bigquery": "^7.0.0",
-    "@google-cloud/functions-framework": "^3.1.0"
+    "@google-cloud/bigquery": "^7.7.0",
+    "body-parser": "^1.20.2",
+    "functions-framework": "^3.3.0"
+  },
+  "functions": {
+    "source": "."
   }
-}
-
-"functions": {
-  "source": ".",
-  "middleware": "middleware.js"
 }
