@@ -3,12 +3,10 @@ const { BigQuery } = require('@google-cloud/bigquery');
 
 exports.shopifyWebhook = async (req, res) => {
   try {
-    // ---- 1. Verify raw body exists ----
     if (!req.rawBody) {
       return res.status(400).send('Missing rawBody');
     }
 
-    // ---- 2. Check HMAC ----
     const secret = process.env.SHOPIFY_SECRET;
     const hmacHeader = req.get("X-Shopify-Hmac-Sha256");
 
@@ -30,10 +28,8 @@ exports.shopifyWebhook = async (req, res) => {
       return res.status(401).send("Invalid HMAC");
     }
 
-    // ---- 3. Parse payload ----
     const payload = JSON.parse(req.rawBody.toString());
 
-    // ---- 4. Insert vào BigQuery ----
     const bigquery = new BigQuery();
     await bigquery
       .dataset("shopify_raw")
