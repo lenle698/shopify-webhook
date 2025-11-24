@@ -1,27 +1,51 @@
 const crypto = require('crypto');
-const {BigQuery} = require('@google-cloud/bigquery');
+const { BigQuery } = require('@google-cloud/bigquery');
 
 exports.shopifyWebhook = async (req, res) => {
-  const hmac = req.get('X-Shopify-Hmac-Sha256');
-  const rawBody = req.rawBody;
-  const secret = process.env.SHOPIFY_SECRET;
+  try {
+    // ---- 1. Verify raw body exists ----
+    if (!req.rawBody) {
+      return res.status(400).send('Missing rawBody');
+    }
 
-  const digest = crypto
-    .createHmac('sha256', secret)
-    .update(rawBody, 'utf8')
-    .digest('base64');
+    // ---- 2. Check HMAC ----
+    const secret = process.env.SHOPIFY_SECRET;
+    const hmacHeader = req.get("X-Shopify-Hmac-Sha256");
 
-  if (digest !== hmac) {
-    return res.status(401).send('Unauthorized');
+    if (!secret) {
+      console.error("Missing SHOPIFY_SECRET env variable");
+      return res.status(500).send("Server config error");
+    }
+
+    if (!hmacHeader) {
+      return res.status(401).send("Missing HMAC header");
+    }
+
+    const digest = crypto
+      .createHmac("sha256", secret)
+      .update(req.rawBody)
+      .digest("base64");
+
+    if (digest !== hmacHeader) {
+      return res.status(401).send("Invalid HMAC");
+    }
+
+    // ---- 3. Parse payload ----
+    const payload = JSON.parse(req.rawBody.toString());
+
+    // ---- 4. Insert vào BigQuery ----
+    const bigquery = new BigQuery();
+    await bigquery
+      .dataset("shopify")
+      .table("webhooks")
+      .insert({
+        timestamp: new Date().toISOString(),
+        data: payload,
+      });
+
+    return res.status(200).send("ok");
+  } catch (err) {
+    console.error("ERROR:", err);
+    return res.status(500).send("Internal error");
   }
-
-  const payload = JSON.parse(rawBody.toString());
-  const bigquery = new BigQuery();
-
-  await bigquery
-    .dataset('shopify')
-    .table('webhooks')
-    .insert({ timestamp: new Date(), data: payload });
-
-  res.status(200).send('ok');
 };
